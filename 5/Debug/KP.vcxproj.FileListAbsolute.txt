@@ -1,0 +1,6 @@
+C:\Users\User\Desktop\KP\Debug\KP.exe
+C:\Users\User\Desktop\KP\Debug\KP.pdb
+C:\Users\User\Desktop\Для вуза\ДЗ\Программирование\5\Debug\KP.exe
+C:\Users\User\Desktop\Для вуза\ДЗ\Программирование\5\Debug\KP.pdb
+C:\Users\User\Desktop\Для вуза\ДЗ\Программирование\Курсовая\5\Debug\KP.exe
+C:\Users\User\Desktop\Для вуза\ДЗ\Программирование\Курсовая\5\Debug\KP.pdb
