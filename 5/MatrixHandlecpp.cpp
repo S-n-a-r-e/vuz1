@@ -1,6 +1,5 @@
 #include "MatrixHandle.h"
 #include <iostream>
-//#include <fstream>
 
 ArrayOfMatrix::ArrayOfMatrix() {
 	mtxArr[currentActiveArray] = new Matrix * [matricesCount];
@@ -89,38 +88,7 @@ void ArrayOfMatrix::increaseArraySize() {
 		currentInactiveArray = currentActiveArray;
 		currentActiveArray = tmpSwitch;
 
-		std::cout << "array increased\n";
-	}
-}
-
-//function returns command code if comand is appropriate. if not, returns 0
-int getCommand(const char const* command) {
-	if ((command[0] == 'n') && (command[1] == 'e') && (command[2] == 'w')) {
-		return 1;		//create new matrix
-	}
-	else if ((command[0] == 'd') && (command[1] == 'e') && (command[2] == 'l') && (command[3] == 'e') && (command[4] == 't') && (command[5] == 'e')) {
-		return 2;		//delete existing matrix
-	}
-	else if ((command[0] == 'g') && (command[1] == 'e') && (command[2] == 't')) {
-		return 3;
-	}
-	else if ((command[0] == 'f') && (command[1] == 'i') && (command[2] == 'l') && (command[3] == 'l')) {
-		return 4;
-	}
-	else if ((command[0] == 'l') && (command[1] == 'i') && (command[2] == 's') && (command[3] == 't')) {
-		return 5;
-	}
-	else if ((command[0] == 's') && (command[1] == 'a') && (command[2] == 'v') && (command[3] == 'e')) {
-		return 6;
-	}
-	else if ((command[0] == 'i') && (command[1] == 'm') && (command[2] == 'p') && (command[3] == 'o') && (command[4] == 'r') && (command[5] == 't')) {
-		return 7;
-	}
-	else if ((command[0] == 's') && (command[1] == 't') && (command[2] == 'o') && (command[3] == 'p')) {
-		return 99;
-	}
-	else {
-		return 0;		//error: no such comand exists
+		//std::cout << "array increased\n";
 	}
 }
 
@@ -177,37 +145,15 @@ int ArrayOfMatrix::getMatrixIndex(const char const* nameBeginPtr) {
 }
 
 //checks if name is not the same as possible command
-bool nameValidation(const char const* nameBeginPtr) {
-	const int amount = 7;
-
-	char invalidNames[amount][7] = {
-		{"new"},
-		{"delete"},
-		{"get"},
-		{"fill"},
-		{"list"},
-		{"save"},
-		{"stop"}
-	};
-
-	unsigned char invNamesLengths[amount] = {
-		3,
-		6,
-		3,
-		4,
-		4,
-		4,
-		4
-	};
-
+bool ArrayOfMatrix::nameValidation(const char const* nameBeginPtr) {
 	int length = nameLength(nameBeginPtr);
 
-	for (int i = 0; i < amount; ++i) {
-		if (length == invNamesLengths[i]) {
+	for (int i = 0; i < commandsCount; ++i) {
+		if (length == mainCommandsLengths[i]) {
 			int coincidence;
 
 			for (coincidence = 0; coincidence < length; ++coincidence) {
-				if (nameBeginPtr[coincidence] != invalidNames[i][coincidence]) {
+				if (nameBeginPtr[coincidence] != mainCommands[i][coincidence]) {
 					break;
 				}
 			}
@@ -221,7 +167,170 @@ bool nameValidation(const char const* nameBeginPtr) {
 	return true;
 }
 
-//adds matrix and a name to array
+//function returns command code if comand is appropriate. if not, returns 0
+int ArrayOfMatrix::getCommand(const char const* command) {
+	int currComLength = nameLength(command);
+
+	//if user in main menu
+	if (currentMode == MAIN_MENU) {
+		for (int i = 0; i < commandsCount; ++i) {
+			if (currComLength == mainCommandsLengths[i]) {
+				int cnsd;
+
+				for (cnsd = 0; cnsd < currComLength; ++cnsd) {
+					if (command[cnsd] != mainCommands[i][cnsd]) {
+						break;
+					}
+				}
+
+				//returns command code if coincedence found
+				if (cnsd == currComLength) {
+					switch (i) {
+						case(0): {
+							return ADD_MATRIX;
+						}
+						case(1): {
+							return DELETE_MATRIX;
+						}
+						case(2): {
+							return GET_MATRIX;
+						}
+						case(3): {
+							return FILL_MATRIX;
+						}
+						case(4): {
+							return GET_LIST;
+						}
+						case(5): {
+							return SAVE_TO_FILE;
+						}
+						case(6): {
+							return STOP;
+						}
+						case(7): {
+							return IMPORT_FROM_FILE;
+						}
+						case(8): {
+							return SET_MATRIX_ELEMENT;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	//if first word of command is a name of existing matrix, returns special command code (matrixname = ... is typed in)
+	if (getMatrixIndex(command) != -1) {
+		return MATRIX_SETTING_MODE;
+	}
+
+	//if no coincedence with existing commands found, returns error code
+	return MATRIX_ERROR;
+}
+
+//operation with matrix, depending on input (sum, multiply)
+void ArrayOfMatrix::setMatrix(const char const* command) {
+	char modifiedMatrixName[21], matrix1Name[21], matrix2Name[21];
+	int modifiedMatrixNameLength = 0, matrix1NameLength = 0, matrix2NameLength = 0;
+
+	int modifiedMatrixIndex, matrix1Index, matrix2Index;
+
+	int approximateEqualsPos, approximateActionSignPos;
+
+	//getting name of matrix for modification
+	for (int i = 0; i < 20; ++i) {
+		if ((command[i] > 'z') || (command[i] < 'a')) { break; }
+
+		modifiedMatrixName[modifiedMatrixNameLength] = command[i];
+
+		++modifiedMatrixNameLength;
+	}
+	modifiedMatrixName[modifiedMatrixNameLength] = 0;
+
+	modifiedMatrixIndex = getMatrixIndex(modifiedMatrixName);
+
+	//approximate position of '=' in command line
+	approximateEqualsPos = modifiedMatrixNameLength + 1;
+
+	//getting name of first matrix
+	for (int i = approximateEqualsPos + 2; i < i + 20; ++i) {
+		if ((command[i] > 'z') || (command[i] < 'a')) { break; }
+
+		matrix1Name[matrix1NameLength] = command[i];
+
+		++matrix1NameLength;
+	}
+	matrix1Name[matrix1NameLength] = 0;
+
+	matrix1Index = getMatrixIndex(matrix1Name);
+
+	//check if first matrix exist
+	if (matrix1Index == -1) {
+		std::cout << "matrix \"" << matrix1Name << "\" does not exist. operation canceled\n\n";
+
+		return;
+	}
+	//check if first matrix initialized
+	if (mtxArr[currentActiveArray][matrix1Index]->isInitialized() == false) {
+		std::cout << "matrix \"" << matrix1Name << "\" is not initialized. operation canceled\n\n";
+
+		return;
+	}
+
+
+	//approximate position of '+'/'*', etc. in command line
+	approximateActionSignPos = approximateEqualsPos + 2 + matrix1NameLength + 1;
+
+	//getting name of second matrix
+	for (int i = approximateActionSignPos + 2; i < i + 20; ++i) {
+		if ((command[i] > 'z') || (command[i] < 'a')) { break; }
+
+		matrix2Name[matrix2NameLength] = command[i];
+
+		++matrix2NameLength;
+	}
+	matrix2Name[matrix2NameLength] = 0;
+
+	matrix2Index = getMatrixIndex(matrix2Name);
+
+	//check if second matrix exist
+	if (matrix2Index == -1) {
+		std::cout << "matrix \"" << matrix2Name << "\" does not exist. operation canceled\n\n";
+
+		return;
+	}
+	//check if second matrix initialized
+	if (mtxArr[currentActiveArray][matrix2Index]->isInitialized() == false) {
+		std::cout << "matrix \"" << matrix1Name << "\" is not initialized. operation canceled\n\n";
+
+		return;
+	}
+
+	if (command[approximateActionSignPos] == '*') {
+		if ((mtxArr[currentActiveArray][modifiedMatrixIndex]->getSize() != mtxArr[currentActiveArray][matrix1Index]->getSize()) ||
+			(mtxArr[currentActiveArray][modifiedMatrixIndex]->getSize() != mtxArr[currentActiveArray][matrix2Index]->getSize())) {
+			std::cout << "matrices have different sizes. operation canceled\n\n";
+
+			return;
+		}
+
+		(*mtxArr[currentActiveArray][modifiedMatrixIndex]) = (*mtxArr[currentActiveArray][matrix1Index]) * (*mtxArr[currentActiveArray][matrix2Index]);
+
+		return;
+
+	}
+
+	if (command[approximateActionSignPos] == '+') {
+		(*mtxArr[currentActiveArray][modifiedMatrixIndex]) = (*mtxArr[currentActiveArray][matrix1Index]) + (*mtxArr[currentActiveArray][matrix2Index]);
+
+		return;
+	}
+
+	
+
+}
+
+//adds matrix and a name to array	CONSOLE
 void ArrayOfMatrix::addMatrix(const char const* nameBeginPtr) {
 	if (getMatrixIndex(nameBeginPtr) != -1) {
 		std::cout << "matrix with such name already exists\n\n";
@@ -233,8 +342,6 @@ void ArrayOfMatrix::addMatrix(const char const* nameBeginPtr) {
 		return;
 	}
 
-	increaseArraySize();
-
 	int length = nameLength(nameBeginPtr);
 
 	if (length < 1) {
@@ -243,24 +350,37 @@ void ArrayOfMatrix::addMatrix(const char const* nameBeginPtr) {
 	}
 	
 	//finding index without initialized matrix
-	int availibleIndex;
-	for (availibleIndex = 0; availibleIndex < matricesCount; ++availibleIndex) {
-		if (matrixAtIndexExists[currentActiveArray][availibleIndex] == 0) {
-			break;
-		}
-	}
+	int availibleIndex = -1;
 
-	//getting matrix size
+	//getting matrix size (and returns if size set to less than 1)
 	std::cout << "enter matrix size:\n";
 	int matrixSize;
 	std::cin >> matrixSize;
 	std::cout << "\n";
-
 	if (matrixSize < 1) {
 		std::cout << "matrix size cannot be less than 1. matrix is not created\n\n";
 		std::cin.ignore();
 		return;
 	}
+
+	increaseArraySize();
+
+	//check if there is empty array element. if there's none, new is initialized
+	for (int i = 0; i < matricesInitialized; ++i) {
+		if (matrixAtIndexExists[currentActiveArray][i] == 0) {
+			availibleIndex = i;
+
+			break;
+		}
+	}
+	if (availibleIndex == -1) {
+		availibleIndex = matricesInitialized;
+
+		++matricesInitialized;
+	}
+
+	
+
 
 	//adding name
 	for (int i = 0; i < length; ++i) {
@@ -275,31 +395,61 @@ void ArrayOfMatrix::addMatrix(const char const* nameBeginPtr) {
 	matrixAtIndexExists[currentActiveArray][availibleIndex] = 1;
 
 	std::cin.ignore();
-	++matricesInitialized;
 	
 
 }
 
-//
-void ArrayOfMatrix::addMatrix(const char const* nameBeginPtr, std::ifstream file) {
-	if (getMatrixIndex(nameBeginPtr) != -1) {
-		std::cout << "matrix with such name already exists\n\n";
-		return;
-	}
-
-	if (nameValidation(nameBeginPtr) == false) {
-		std::cout << "name cannot match with possible command. unable to create matrix.\n\n";
-		return;
-	}
-
+//adds matrix and a name to array	FILE
+void ArrayOfMatrix::addMatrix(const char const* nameBeginPtr, int elementsCount, std::ifstream& file) {
 	increaseArraySize();
 
 	int length = nameLength(nameBeginPtr);
 
-	
+	//finding index without initialized matrix
+	int availibleIndex = -1;
 
+	//check if there is empty array element. if there's none, new is initialized
+	for (int i = 0; i < matricesInitialized; ++i) {
+		if (matrixAtIndexExists[currentActiveArray][i] == 0) {
+			availibleIndex = i;
 
+			break;
+		}
+	}
+	if ((availibleIndex == -1) || (matricesInitialized == 0)) {
+		availibleIndex = matricesInitialized;
 
+		++matricesInitialized;
+	}
+
+	//adding name
+	for (int i = 0; i < length; ++i) {
+		names[currentActiveArray][availibleIndex][i] = nameBeginPtr[i];
+	}
+	names[currentActiveArray][availibleIndex][length] = 0; 
+
+	//adding matrix
+	mtxArr[currentActiveArray][availibleIndex] = new Matrix(elementsCount);
+
+	int** tempMatrix = new int* [elementsCount];
+	for (int i = 0; i < elementsCount; ++i) {
+		tempMatrix[i] = new int[elementsCount];
+	}
+
+	//getting all elements
+	for (int i = 0; i < elementsCount; ++i) {
+		for (int j = 0; j < elementsCount; ++j) {
+			int inputNumber;
+			file >> inputNumber;
+
+			tempMatrix[i][j] = inputNumber;
+		}
+	}
+
+	mtxArr[currentActiveArray][availibleIndex] = new Matrix(elementsCount, tempMatrix);
+
+	//setting flag to 1
+	matrixAtIndexExists[currentActiveArray][availibleIndex] = 1;
 }
 
 //removes matrix and name from array
@@ -330,29 +480,73 @@ void ArrayOfMatrix::fillMatrix(const char const* nameBeginPtr) {
 		return;
 	}
 
-	std::cout << "type in data source (console/file):\n";
-
-	char input[100];
-	std::cin.getline(input, 8);
+	std::cout << "enter matrix data:\n";
+	mtxArr[currentActiveArray][matrixIndex]->consoleInput();
 	std::cout << "\n";
 
-	if ((input[0] == 'c') && (input[1] == 'o') && (input[2] == 'n') && (input[3] == 's') && (input[4] == 'o') && (input[5] == 'l') && (input[6] == 'e')) {
-		std::cout << "enter matrix data:\n";
-		mtxArr[currentActiveArray][matrixIndex]->consoleInput();
-		std::cout << "\n";
+	std::cin.ignore();
+}
 
-		std::cin.ignore();
-	}
-	else if ((input[0] == 'f') && (input[1] == 'i') && (input[2] == 'l') && (input[3] == 'e')) {
-		std::cout << "enter file name (file should be located inside program folder):\n";
-		std::cin.getline(input, 100);
-		std::cout << "\n";;
+//parses number from input string
+int parseNumberFromString(const char const* digitBeginPtr, int* numeralCountOutput) {
+	int number = 0;
+	int numeralCount = 0;
 
-		mtxArr[currentActiveArray][matrixIndex]->fileInput(input);
+	while ((digitBeginPtr[numeralCount] != ' ') && (digitBeginPtr[numeralCount] != 0)) {
+		++numeralCount;
 	}
+
+	for (int i = 0; i < numeralCount; ++i) {
+		int currentDigit = digitBeginPtr[i] - '0';
+
+		number += currentDigit * pow(10, numeralCount - i - 1);
+	}
+
+	if (numeralCountOutput != nullptr) {
+		*numeralCountOutput = numeralCount;
+	}
+
+	return number;
 }
 
 //
+void ArrayOfMatrix::setMatrixElement(const char const* nameBeginPtr) {
+	if (nameBeginPtr[-1] == 0) {
+		std::cout << "no name entered\n\n";
+		return;
+	}
+
+	int matrixIndex = getMatrixIndex(nameBeginPtr);
+
+	if (matrixIndex == -1) {
+		std::cout << "no such matrix exists\n\n";
+		return;
+	}
+
+	int digitIndex = 0;
+	while ((nameBeginPtr[digitIndex] != ' ') && (nameBeginPtr[digitIndex] != 0)) {
+		++digitIndex;
+	}
+	++digitIndex;
+
+	if (nameBeginPtr[digitIndex - 1] == 0) {
+		std::cout << "no index entered\n\n";
+		return;
+	}
+
+	int xLength;
+	int x = parseNumberFromString(&nameBeginPtr[digitIndex], &xLength);
+
+	digitIndex += xLength + 1;
+
+	int y = parseNumberFromString(&nameBeginPtr[digitIndex], nullptr);
+
+	std::cout << x << "\t" << y << "\n";
+
+
+}
+
+//imports matrices into array from file
 void ArrayOfMatrix::importFromFile() {
 	char path[100];
 	std::cout << "enter import file path:\n";
@@ -366,7 +560,7 @@ void ArrayOfMatrix::importFromFile() {
 		return;
 	}
 	
-	//finding last digit - amoun of saved matrices
+	//finding last digit - amount of saved matrices
 	int pos = -1;
 	file.seekg(pos, file.end);
 	while (file.peek() != '\n') {
@@ -379,6 +573,8 @@ void ArrayOfMatrix::importFromFile() {
 	file >> mtxCountInFile;
 
 	file.seekg(0, file.beg);
+
+	bool needToSkipLine = false;
 
 	for (int i = 0; i < mtxCountInFile; ++i) {
 		char name[21] = { 0 };
@@ -397,67 +593,37 @@ void ArrayOfMatrix::importFromFile() {
 		int elementCount;
 		file >> elementCount;
 
+		//check if matrix with that name already exists and skip it's data if needed
 		if (getMatrixIndex(name) != -1) {
 			std::cout << "unable to save matrix \"" << name << "\" - this name is already occupied\n";
+			needToSkipLine = true;
+
+			int tempToSkipMatrixData;
+			for (int j = 0; j < elementCount * elementCount; ++j) {
+				file >> tempToSkipMatrixData;
+			}
 
 			do {
 				file.ignore();
-
-				//std::cout << (char)file.peek() << "-\n";
 			} while (file.peek() != '\n');
+			file.ignore();
+			file.ignore();
 
 			continue;
 		}
 
+		addMatrix(name, elementCount, file);
 
-		//std::cout << " - " << elementCount << " - ll\n\n";
-
-		increaseArraySize();
-
-		//mtxArr[currentActiveArray][matricesInitialized] = new Matrix(elementCount);
-
-		for (int j = 0; j < matricesCount; ++j) {
-			if (matrixAtIndexExists[currentActiveArray][j] == 0) {
-				mtxArr[currentActiveArray][j] = new Matrix(elementCount);
-
-				for (int row = 0; row < elementCount; ++row) {
-					for (int col = 0; col < elementCount; ++col) {
-						int input;
-						file >> input;
-
-						mtxArr[currentActiveArray][j]->setElement(row, col, input);
-					}
-				}
-
-				for (int letter = 0; letter < 21; ++letter) {
-					names[currentActiveArray][j][letter] = name[letter];
-				}
-
-				matrixAtIndexExists[currentActiveArray][j] = 1;
-
-				++matricesInitialized;
-			}
-
-
-
-		}
-
-
-
-		/*for (int row = 0; row < elementCount; ++row) {
-			for (int col = 0; col < elementCount; ++col) {
-				mtxArr[currentActiveArray][matricesInitialized]
-			}
-		}*/
-
-
+		file.ignore();
+		file.ignore();
+		file.ignore();
 	}
 
-
+	if (needToSkipLine == true) {
+		std::cout << "\n";
+	}
 
 	file.close();
-
-
 }
 
 //saves data into file
@@ -478,6 +644,12 @@ void ArrayOfMatrix::saveInFile() {
 
 		for (int i = 0; i < matricesInitialized; ++i) {
 			if (matrixAtIndexExists[currentActiveArray][i] == 1) {
+				if (mtxArr[currentActiveArray][i]->isInitialized() == false) {
+					std::cout << "unable to save matrix \"" << names[currentActiveArray][i] << "\" - matrix is not initialized\n";
+
+					continue;
+				}
+
 				//writing name and size
 				file << names[currentActiveArray][i] << " " << mtxArr[currentActiveArray][i]->getSize() << "\n";
 
@@ -544,7 +716,7 @@ void ArrayOfMatrix::saveInFile() {
 void ArrayOfMatrix::action() {
 	while (true) {
 
-		char* inputCommand = new char[80];
+		char inputCommand[80];
 
 		std::cout << "enter a comand:\n";
 		std::cin.getline(inputCommand, 80, '\n');
@@ -553,22 +725,22 @@ void ArrayOfMatrix::action() {
 		int command = getCommand(inputCommand);
 
 		switch (command) {
-			case (0): {	//inappropriate command
+			case (MATRIX_ERROR): {	//inappropriate command
 				std::cout << "no such command exists\n\n";
 
 				break;
 			}
-			case (1): {	//"new /name/"
+			case (ADD_MATRIX): {	//"new /name/"
 				addMatrix(&inputCommand[4]);
 
 				break;
 			}
-			case (2): {	//"delete /name/"
+			case (DELETE_MATRIX): {	//"delete /name/"
 				deleteMatrix(&inputCommand[7]);
 
 				break;
 			}
-			case (3): {	//"get /name/"
+			case (GET_MATRIX): {	//"get /name/"
 				int foundMatrixIndex = getMatrixIndex(&inputCommand[4]);
 
 				if (foundMatrixIndex != -1) {
@@ -580,35 +752,40 @@ void ArrayOfMatrix::action() {
 
 				break;
 			}
-			case (4): {	//"fill /name/"
+			case (FILL_MATRIX): {	//"fill /name/"
 				fillMatrix(&inputCommand[5]);
 
 				break;
 			}
-			case(5): {	//"list"
+			case (GET_LIST): {	//"list"
 				outputNames();
 
 				break;
 			}
-			case(6): {	//"save"
+			case (SAVE_TO_FILE): {	//"save"
 				saveInFile();
 
 				break;
 			}
-			case(7): {	//"import"
+			case (IMPORT_FROM_FILE): {	//"import"
 				importFromFile();
+
+				break;
+			}
+			case (MATRIX_SETTING_MODE): {	//"matrix = mat1 * mat2"
+				setMatrix(inputCommand);
+
+				break;
+			}
+			case(SET_MATRIX_ELEMENT): {		//"set \matrixname\ 1 1
+				setMatrixElement(&inputCommand[4]);
 
 				break;
 			}
 		}
 
-		if (command == 99) {	//"stop"
-			delete[] inputCommand;
-
+		if (command == STOP) {	//"stop"
 			break;
 		}
-
-
-		delete[] inputCommand;
 	}
 }

@@ -6,10 +6,10 @@ class Matrix {
 
 	bool initialized = false;
 
-	Matrix(int s, int** inpMat);
-
 public:
 	Matrix(int s);
+
+	Matrix(int s, int** inpMat);
 
 	void consoleInput();
 

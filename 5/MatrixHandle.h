@@ -3,13 +3,26 @@
 
 #define MAIN_MENU 0
 
-#define ADD_MATRIX 1
-#define DELETE_MATRIX 2
-#define GET_MATRIX 3
-#define FILL_MATRIX 4
-#define GET_LIST 5
-#define SAVE_TO_FILE 6
-#define IMPORT_FROM_FILE 7
+#define ADD_MATRIX 101
+#define DELETE_MATRIX 102
+#define GET_MATRIX 103
+#define FILL_MATRIX 104
+#define GET_LIST 105
+#define SAVE_TO_FILE 106
+#define IMPORT_FROM_FILE 107
+#define SET_MATRIX_ELEMENT 108
+
+#define MATRIX_SETTING_MODE 109
+#define MATRIX_MULTIPLY 110
+#define MATRIX_PLUS 111
+
+
+
+
+#define MATRIX_ERROR -1
+
+#define STOP -3
+
 
 class ArrayOfMatrix {
 	unsigned int matricesCount = 2, matricesInitialized = 0;;
@@ -23,39 +36,48 @@ class ArrayOfMatrix {
 
 	int currentMode = MAIN_MENU;
 
-
-
-
-	char mainCommands[7][7] = {
+	//availible commands if MAIN_MENU is set (user is in main menu)
+	static const int commandsCount = 9;
+	char mainCommands[commandsCount][7] = {
 		{"new"},
 		{"delete"},
 		{"get"},
 		{"fill"},
 		{"list"},
 		{"save"},
-		{"import"}
+		{"stop"},
+		{"import"},
+		{"set"}
 	};
-	int mainCommandsLengths[7] = {
-		3, 6, 3, 4, 4, 4, 6
+	int mainCommandsLengths[commandsCount] = {
+		3, 6, 3, 4, 4, 4, 4, 6, 3
 	};
-
-
-
 	
+//utility
 private:
+	void addMatrix(const char const* nameBeginPtr, int elementsCount, std::ifstream& file);
+
+	int getMatrixIndex(const char const* name);
+
+	void increaseArraySize();
+
+	bool nameValidation(const char const* nameBeginPtr);
+
+//used in "action()"
+private:
+	int getCommand(const char const* command);
+
+	void setMatrix(const char const* command);
+
 	void outputNames();
 
 	void addMatrix(const char const* nameBeginPtr);
 
-	void addMatrix(const char const* nameBeginPtr, std::ifstream file);
-
 	void deleteMatrix(const char const* name);
-
-	int getMatrixIndex(const char const* name);
 
 	void fillMatrix(const char const* nameBeginPtr);
 
-	void increaseArraySize();
+	void setMatrixElement(const char const* nameBeginPtr);
 
 	void importFromFile();
 
