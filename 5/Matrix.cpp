@@ -341,6 +341,39 @@ Matrix Matrix::operator+(Matrix const& otherMat) {
 	return Matrix(size, temp);
 }
 
+Matrix Matrix::operator&(Matrix const& otherMat) {
+	int** temp = new int* [size];
+	for (int i = 0; i < size; ++i) {
+		temp[i] = new int[size];
+	}
+
+	for (int i = 0; i < size; ++i) {
+		int zeroCountFirst = 0, zeroCountSecond = 0;
+
+		for (int j = 0; j < size; ++j) {
+			if (mat[i][j] == 0) {
+				++zeroCountFirst;
+			}
+			if (otherMat.mat[i][j] == 0) {
+				++zeroCountSecond;
+			}
+		}
+
+		if (zeroCountFirst >= zeroCountSecond) {
+			for (int j = 0; j < size; ++j) {
+				temp[i][j] = mat[i][j];
+			}
+		}
+		else {
+			for (int j = 0; j < size; ++j) {
+				temp[i][j] = otherMat.mat[i][j];
+			}
+		}
+	}
+
+	return Matrix(size, temp);
+}
+
 int& Matrix::operator()(int i, int j) {
 	return mat[i][j];
 }

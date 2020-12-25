@@ -33,6 +33,8 @@ public:
 
 	Matrix operator+(Matrix const& otherMat);
 
+	Matrix operator&(Matrix const& otherMat);
+
 	int& operator()(int i, int j);
 
 	int getSize();

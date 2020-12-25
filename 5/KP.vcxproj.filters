@@ -27,7 +27,7 @@
     <ClCompile Include="Matrix.cpp">
       <Filter>Исходные файлы\Matrix</Filter>
     </ClCompile>
-    <ClCompile Include="MatrixHandlecpp.cpp">
+    <ClCompile Include="MatrixHandle.cpp">
       <Filter>Исходные файлы\MatrixHandle</Filter>
     </ClCompile>
   </ItemGroup>

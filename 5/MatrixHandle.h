@@ -11,13 +11,8 @@
 #define SAVE_TO_FILE 106
 #define IMPORT_FROM_FILE 107
 #define SET_MATRIX_ELEMENT 108
-
-#define MATRIX_SETTING_MODE 109
-#define MATRIX_MULTIPLY 110
-#define MATRIX_PLUS 111
-
-
-
+#define NEGATE_NEGATIVE 109
+#define MATRIX_SETTING_MODE 110
 
 #define MATRIX_ERROR -1
 
@@ -37,7 +32,7 @@ class ArrayOfMatrix {
 	int currentMode = MAIN_MENU;
 
 	//availible commands if MAIN_MENU is set (user is in main menu)
-	static const int commandsCount = 9;
+	static const int commandsCount = 10;
 	char mainCommands[commandsCount][7] = {
 		{"new"},
 		{"delete"},
@@ -47,10 +42,11 @@ class ArrayOfMatrix {
 		{"save"},
 		{"stop"},
 		{"import"},
-		{"set"}
+		{"set"},
+		{"negate"}
 	};
 	int mainCommandsLengths[commandsCount] = {
-		3, 6, 3, 4, 4, 4, 4, 6, 3
+		3, 6, 3, 4, 4, 4, 4, 6, 3, 6
 	};
 	
 //utility
@@ -79,11 +75,11 @@ private:
 
 	void setMatrixElement(const char const* nameBeginPtr);
 
+	void negateNegative(const char const* nameBeginPtr);
+
 	void importFromFile();
 
 	void saveInFile();
-
-
 
 public:
 	ArrayOfMatrix();
